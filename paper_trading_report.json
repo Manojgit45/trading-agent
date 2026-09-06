@@ -1,0 +1,25 @@
+{
+  "market": "India / NSE cash equities only",
+  "mode": "PAPER ONLY \u2014 no broker orders are submitted",
+  "starting_cash_inr": 100000.0,
+  "cash_inr": 80240.0,
+  "equity_inr": 100120.0,
+  "open_positions": [
+    {
+      "symbol": "RELIANCE",
+      "quantity": 14,
+      "entry_price": 1410.0,
+      "entry_day": "2026-01-21"
+    }
+  ],
+  "trades": [
+    {
+      "day": "2026-01-21",
+      "symbol": "RELIANCE",
+      "side": "BUY",
+      "quantity": 14,
+      "price": 1410.0,
+      "reason": "5/20 SMA bullish crossover"
+    }
+  ]
+}

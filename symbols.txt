@@ -1,0 +1,17 @@
+# Indian stock symbols for live analysis
+# One symbol per line or comma-separated values.
+RELIANCE
+TCS
+INFY
+HDFCBANK
+ICICIBANK
+SBIN
+ITC
+LTIM
+SUNPHARMA
+BHARTIARTL
+KOTAKBANK
+AXISBANK
+WIPRO
+TATAMOTORS
+HINDUNILVR

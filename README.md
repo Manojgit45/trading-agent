@@ -1,0 +1,156 @@
+# Indian Paper Trader
+
+An India-only, NSE cash-equity **paper-trading** agent. It does not connect to a
+broker and has no code path for live order submission.
+
+It uses a daily 5/20-day simple-moving-average crossover, with a 3% protective
+stop. The limits in `RiskLimits` start with ₹100,000, allow at most three
+positions, and cap each at 20% of marked-to-market equity. Brokerage is modeled
+as ₹20 per simulated order.
+
+## Run the paper-trading engine
+
+Create data files named for NSE symbols. Each must contain a header and daily
+rows, for example `data/RELIANCE.csv`:
+
+```csv
+date,close
+2026-01-02,1420.50
+2026-01-05,1432.10
+```
+
+Then run:
+
+```powershell
+python .\agent.py .\data --output .\paper_trading_report.json
+```
+
+The JSON report lists every simulated trade, open position, cash, and portfolio
+equity. Treat results as research only; do not use this as investment advice or
+as evidence that the strategy will work live.
+
+## Live Indian market analysis
+
+The project also includes a live market-analysis mode for Indian equities using
+public Yahoo Finance data. This is useful for near real-time screening and
+technical checks, but the market data is still a public, delayed feed rather than
+broker-grade execution data.
+
+Analyze a few symbols:
+
+```powershell
+python .\agent.py --live --symbols RELIANCE TCS INFY
+```
+
+Analyze the broad Indian market watchlist:
+
+```powershell
+python .\agent.py --live --all --output .\india_market_scan.json
+```
+
+Analyze every symbol from a file (one symbol per line):
+
+```powershell
+python .\agent.py --live --symbols-file .\symbols.txt --output .\live_analysis.json
+```
+
+Or analyze the default watchlist:
+
+```powershell
+python .\agent.py --live --output .\live_analysis.json
+```
+
+The live mode returns a ranked summary with price, SMA (20 and 50), RSI (14),
+volume, trend, and a simple buy/hold/sell signal for each stock.
+
+## Dashboard visualization
+
+You can visualize the generated market results in a browser dashboard:
+
+```powershell
+.\.venv\Scripts\python.exe -m streamlit run .\dashboard.py
+```
+
+The dashboard reads the generated JSON report, filters by signal or score, and shows:
+
+- ranked stock table
+- buy/sell/hold signal counts
+- top stocks by score
+- trend distribution
+
+It works with files such as `live_analysis.json` or `india_market_scan.json`.
+
+## Daily pre-market shortlist
+
+Run the daily screener before 9:00 AM to rank a broad Indian stock universe for short-term buy ideas. The script combines live price trend, volume, RSI, and recent Google News sentiment into a single score and returns the top 10 names.
+
+```powershell
+python .\daily_scanner.py --universe .\market_universe.txt --top 10 --output .\top_10_stocks.json --csv-output .\top_10_stocks.csv
+```
+
+This uses public market data and public news headlines, so it is informational only and not a broker-grade execution tool.
+
+## Daily automation and alerts
+
+To run the screener automatically before market open on Windows, create a scheduled task:
+
+```powershell
+$script = '.\scripts\run_daily_scan.ps1'
+$action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument "-ExecutionPolicy Bypass -File \"$script\""
+$trigger = New-ScheduledTaskTrigger -Daily -At 08:30AM
+Register-ScheduledTask -Action $action -Trigger $trigger -TaskName 'IndianStockDailyScan' -Force
+```
+
+If you want Telegram or email alerts, pass the credentials when running the script:
+
+```powershell
+$env:TELEGRAM_BOT_TOKEN = 'YOUR_BOT_TOKEN'
+$env:TELEGRAM_CHAT_ID = 'YOUR_CHAT_ID'
+$env:SMTP_SERVER = 'smtp.gmail.com'
+$env:SMTP_PORT = '587'
+$env:SMTP_USER = 'you@gmail.com'
+$env:SMTP_PASSWORD = 'app-password'
+$env:EMAIL_FROM = 'you@gmail.com'
+$env:EMAIL_TO = 'you@gmail.com,team@example.com'
+
+.\scripts\run_daily_scan.ps1
+```
+
+The daily scanner can also be started through GitHub Actions on a cron schedule. The workflow file is in `.github/workflows/daily_stock_scan.yml` and reads Telegram and SMTP secrets from repository secrets.
+
+## Package for GitHub
+
+This project is structured so it can be pushed to GitHub as a normal Python project.
+
+Install the project in editable mode:
+
+```powershell
+python -m pip install -e .
+```
+
+Then use the script entry points:
+
+```powershell
+indian-paper-trader --live --all --output .\india_market_scan.json
+india-daily-screener --universe .\market_universe.txt --top 10 --output .\top_10_stocks.json
+```
+
+To publish to GitHub, initialize a repository locally and push it to your remote:
+
+```powershell
+git init
+git add .
+git commit -m "Initial market screener release"
+git branch -M main
+git remote add origin <your-github-repo-url>
+git push -u origin main
+```
+
+This environment does not currently have `git` installed, so the repository is prepared for GitHub but not yet pushed from here.
+
+## Next safe extension
+
+Once paper results are validated, add an approved India-capable broker adapter
+(such as Zerodha Kite or Upstox) behind a separate, manually enabled execution
+gate. Do not reuse the paper-trading logic as unattended live execution without
+broker-specific compliance, order-state handling, and independent risk review.

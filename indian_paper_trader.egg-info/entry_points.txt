@@ -1,0 +1,3 @@
+[console_scripts]
+india-daily-screener = daily_scanner:main
+indian-paper-trader = agent:main

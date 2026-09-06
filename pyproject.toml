@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "indian-paper-trader"
+version = "0.1.0"
+description = "India-only paper trading, market analysis, and daily stock screening tool"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "pandas>=2.1",
+  "yfinance>=0.2",
+  "requests>=2.31",
+  "streamlit>=1.35",
+  "plotly>=5.22",
+]
+
+[project.scripts]
+indian-paper-trader = "agent:main"
+india-daily-screener = "daily_scanner:main"
+
+[tool.setuptools]
+py-modules = ["agent", "daily_scanner", "dashboard"]
