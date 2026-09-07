@@ -2,7 +2,7 @@ name: Daily Indian Stock Scan
 
 on:
   schedule:
-    - cron: '30 10 * * 1-5'
+    - cron: '30 3 * * 1-5'
   workflow_dispatch:
 
 jobs:
@@ -33,14 +33,27 @@ jobs:
           EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
           EMAIL_TO: ${{ secrets.EMAIL_TO }}
         run: |
-          ARGS="--universe market_universe.txt --top 10 --output top_10_stocks.json --csv-output top_10_stocks.csv"
+          ARGS=(
+            --universe market_universe.txt
+            --top 10
+            --output top_10_stocks.json
+            --csv-output top_10_stocks.csv
+          )
           if [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ]; then
-            ARGS="$ARGS --telegram-token \"$TELEGRAM_BOT_TOKEN\" --telegram-chat-id \"$TELEGRAM_CHAT_ID\""
+            ARGS+=(--telegram-token "$TELEGRAM_BOT_TOKEN" --telegram-chat-id "$TELEGRAM_CHAT_ID")
           fi
           if [ -n "$SMTP_SERVER" ] && [ -n "$SMTP_USER" ] && [ -n "$SMTP_PASSWORD" ] && [ -n "$EMAIL_FROM" ] && [ -n "$EMAIL_TO" ]; then
-            ARGS="$ARGS --smtp-server \"$SMTP_SERVER\" --smtp-port ${SMTP_PORT:-587} --smtp-user \"$SMTP_USER\" --smtp-password \"$SMTP_PASSWORD\" --email-from \"$EMAIL_FROM\" --email-to $EMAIL_TO"
+            IFS=',' read -ra EMAIL_RECIPIENTS <<< "$EMAIL_TO"
+            ARGS+=(
+              --smtp-server "$SMTP_SERVER"
+              --smtp-port "${SMTP_PORT:-587}"
+              --smtp-user "$SMTP_USER"
+              --smtp-password "$SMTP_PASSWORD"
+              --email-from "$EMAIL_FROM"
+              --email-to "${EMAIL_RECIPIENTS[@]}"
+            )
           fi
-          python daily_scanner.py $ARGS
+          python daily_scanner.py "${ARGS[@]}"
 
       - name: Upload scan result
         uses: actions/upload-artifact@v4
